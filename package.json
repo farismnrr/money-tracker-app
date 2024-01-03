@@ -1,0 +1,21 @@
+{
+  "name": "money-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/debug-agent": "latest_version",
+    "@google-cloud/storage": "latest_version",
+    "body-parser": "latest_version",
+    "dateformat": "latest_version",
+    "express": "latest_version",
+    "multer": "latest_version",
+    "nodemon": "latest_version"
+  }
+}
