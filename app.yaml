@@ -1,0 +1,6 @@
+runtime: php74
+service: dicoding-submission-3-frontend
+
+handlers:
+  - url: /assets
+    static_dir: assets
