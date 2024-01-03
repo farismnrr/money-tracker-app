@@ -8,12 +8,12 @@ const pathKey = path.resolve('./serviceaccountkey.json');
 
 // TODO: Sesuaikan konfigurasi Storage
 const gcs = new Storage({
-    projectId: 'farismnrr-gclouds',
+    projectId: 'submission-mgce-farismnrr',
     keyFilename: pathKey,
 });
 
 // TODO: Tambahkan nama bucket yang digunakan
-const bucketName = 'farismnrr-gclouds.appspot.com';
+const bucketName = 'dicoding-submission-farismnrr';
 const bucket = gcs.bucket(bucketName);
 
 function getPublicUrl(filename) {

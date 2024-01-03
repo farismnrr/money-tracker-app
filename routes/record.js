@@ -1,144 +1,157 @@
-const express = require('express');
-const router = express.Router();
-const Multer = require('multer');
-const imgUpload = require('../modules/imgUpload');
+const express = require('express')
+const mysql = require('mysql')
+const router = express.Router()
+const Multer = require('multer')
+const imgUpload = require('../modules/imgUpload')
 
 const multer = Multer({
     storage: Multer.MemoryStorage,
-    fileSize: 5 * 1024 * 1024,
-});
+    fileSize: 5 * 1024 * 1024
+})
 
-let records = []; // In-memory storage
+const connection = mysql.createConnection({
+    host: '35.187.243.158',
+    user: 'root',
+    database: 'money-tracker-db',
+    password: ''
+})
 
-router.get('/dashboard', (req, res) => {
-    const monthRecords = records.filter((record) => {
-        const recordDate = new Date(record.date);
-        return (
-            recordDate.getMonth() === new Date().getMonth() &&
-            recordDate.getFullYear() === new Date().getFullYear()
-        );
-    });
-
-    const totalAmount = records.reduce((sum, record) => sum + record.amount, 0);
-
-    res.json({
-        month_records: monthRecords.length,
-        total_amount: totalAmount,
-    });
-});
-
-router.get('/getrecords', (req, res) => {
-    res.json(records);
-});
-
-router.get('/getlast10records', (req, res) => {
-    const last10Records = records.slice(-10).reverse();
-    res.json(last10Records);
-});
-
-router.get('/gettopexpense', (req, res) => {
-    const topExpenseRecords = records
-        .filter((record) => record.amount < 0)
-        .slice(0, 10);
-    res.json(topExpenseRecords);
-});
-
-router.get('/getrecord/:id', (req, res) => {
-    const id = req.params.id;
-    const record = records.find((record) => record.id === id);
-
-    if (record) {
-        res.json(record);
-    } else {
-        res.status(404).send({ message: 'Record not found' });
-    }
-});
-
-router.get('/searchrecords', (req, res) => {
-    const s = req.query.s.toLowerCase();
-
-    const searchResults = records.filter(
-        (record) =>
-            record.name.toLowerCase().includes(s) ||
-            record.notes.toLowerCase().includes(s),
-    );
-
-    res.json(searchResults);
-});
-
-router.post(
-    '/insertrecord',
-    multer.single('attachment'),
-    imgUpload.uploadToGcs,
-    (req, res) => {
-        const { name, amount, date, notes } = req.body;
-        const imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
-
-        const newRecord = {
-            id: generateUniqueId(), // Implement a function to generate a unique ID
-            name,
-            amount,
-            date,
-            notes,
-            attachment: imageUrl,
-        };
-
-        records.push(newRecord);
-        res.send({ message: 'Insert Successful' });
-    },
-);
-
-router.put(
-    '/editrecord/:id',
-    multer.single('attachment'),
-    imgUpload.uploadToGcs,
-    (req, res) => {
-        const id = req.params.id;
-        const { name, amount, date, notes } = req.body;
-        const imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
-
-        const index = records.findIndex((record) => record.id === id);
-
-        if (index !== -1) {
-            records[index] = {
-                id,
-                name,
-                amount,
-                date,
-                notes,
-                attachment: imageUrl,
-            };
-
-            res.send({ message: 'Update Successful' });
+router.get("/dashboard", (req, res) => {
+    const query = "select (select count(*) from records where month(records.date) = month(now()) AND year(records.date) = year(now())) as month_records, (select sum(amount) from records) as total_amount;"
+    connection.query(query, (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
         } else {
-            res.status(404).send({ message: 'Record not found' });
+            res.json(rows)
         }
-    },
-);
+    })
+})
 
-router.delete('/deleterecord/:id', (req, res) => {
-    const id = req.params.id;
+router.get("/getrecords", (req, res) => {
+    const query = "SELECT * FROM records"
+    connection.query(query, (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
 
-    records = records.filter((record) => record.id !== id);
+router.get("/getlast10records", (req, res) => {
+    const query = "SELECT * FROM records ORDER BY date DESC LIMIT 10"
+    connection.query(query, (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
 
-    res.send({ message: 'Delete successful' });
-});
+router.get("/gettopexpense", (req, res) => {
+    const query = "SELECT * FROM records WHERE amount < 0 ORDER BY amount ASC LIMIT 10"
+    connection.query(query, (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
 
-router.post(
-    '/uploadImage',
-    multer.single('image'),
-    imgUpload.uploadToGcs,
-    (req, res, next) => {
-        const data = req.body;
-        data.imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
+router.get("/getrecord/:id", (req, res) => {
+    const id = req.params.id
 
-        res.send(data);
-    },
-);
+    const query = "SELECT * FROM records WHERE id = ?"
+    connection.query(query, [id], (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
 
-// Function to generate a unique ID
-function generateUniqueId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
+router.get("/searchrecords", (req, res) => {
+    const s = req.query.s;
 
-module.exports = router;
+    console.log(s)
+    const query = "SELECT * FROM records WHERE name LIKE '%" + s + "%' or notes LIKE '%" + s + "%'"
+    connection.query(query, (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
+
+router.post("/insertrecord", multer.single('attachment'), imgUpload.uploadToGcs, (req, res) => {
+    const name = req.body.name
+    const amount = req.body.amount
+    const date = req.body.date
+    const notes = req.body.notes
+    var imageUrl = ''
+
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        imageUrl = req.file.cloudStoragePublicUrl
+    }
+
+    const query = "INSERT INTO records (name, amount, date, notes, attachment) values (?, ?, ?, ?, ?)"
+
+    connection.query(query, [name, amount, date, notes, imageUrl], (err, rows, fields) => {
+        if (err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.send({message: "Insert Successful"})
+        }
+    })
+})
+
+router.put("/editrecord/:id", multer.single('attachment'), imgUpload.uploadToGcs, (req, res) => {
+    const id = req.params.id
+    const name = req.body.name
+    const amount = req.body.amount
+    const date = req.body.date
+    const notes = req.body.notes
+    var imageUrl = ''
+
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        imageUrl = req.file.cloudStoragePublicUrl
+    }
+
+    const query = "UPDATE records SET name = ?, amount = ?, date = ?, notes = ?, attachment = ? WHERE id = ?"
+    
+    connection.query(query, [name, amount, date, notes, imageUrl, id], (err, rows, fields) => {
+        if (err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.send({message: "Update Successful"})
+        }
+    })
+})
+
+router.delete("/deleterecord/:id", (req, res) => {
+    const id = req.params.id
+    
+    const query = "DELETE FROM records WHERE id = ?"
+    connection.query(query, [id], (err, rows, fields) => {
+        if (err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.send({message: "Delete successful"})
+        }
+    })
+})
+
+router.post("/uploadImage", multer.single('image'), imgUpload.uploadToGcs, (req, res, next) => {
+    const data = req.body
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        data.imageUrl = req.file.cloudStoragePublicUrl
+    }
+
+    res.send(data)
+})
+
+module.exports = router
