@@ -10,12 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/debug-agent": "latest_version",
-    "@google-cloud/storage": "latest_version",
-    "body-parser": "latest_version",
-    "dateformat": "latest_version",
-    "express": "latest_version",
-    "multer": "latest_version",
-    "nodemon": "latest_version"
+    "@google-cloud/debug-agent": "^3.2.0",
+    "@google-cloud/storage": "^2.4.2",
+    "body-parser": "^1.18.3",
+    "dateformat": "^3.0.3",
+    "express": "^4.16.4",
+    "multer": "^1.4.1",
+    "nodemon": "^latest_version"
   }
 }
