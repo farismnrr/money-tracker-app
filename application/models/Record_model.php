@@ -7,7 +7,7 @@ class Record_model extends CI_Model {
 
     public function __construct() {
         $this->client = new Client([
-            'base_uri' => "https://dicoding-submission-3-backend-dot-farismnrr-gclouds.as.r.appspot.com",
+            'base_uri' => "http://34.124.136.103:8000/",
         ]);
     }
 

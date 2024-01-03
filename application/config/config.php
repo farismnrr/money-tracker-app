@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'https://dicoding-submission-3-frontend-dot-farismnrr-gclouds.as.r.appspot.com';
+$config['base_url'] = 'http://frontend.submission-mgce-farismnrr.as.r.appspot.com/';
 
 /*
 |--------------------------------------------------------------------------
