@@ -66,27 +66,29 @@ router.get('/searchrecords', (req, res) => {
     res.json(searchResults);
 });
 
-router.post(
-    '/insertrecord',
-    multer.single('attachment'),
-    imgUpload.uploadToGcs,
-    (req, res) => {
-        const { name, amount, date, notes } = req.body;
-        const imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
+router.post('/insertrecord', multer.single('attachment'), imgUpload.uploadToGcs, (req, res) => {
+    const name = req.body.name;
+    const amount = req.body.amount;
+    const date = req.body.date;
+    const notes = req.body.notes;
+    let imageUrl = '';
 
-        const newRecord = {
-            id: generateUniqueId(), // Implement a function to generate a unique ID
-            name,
-            amount,
-            date,
-            notes,
-            attachment: imageUrl,
-        };
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        imageUrl = req.file.cloudStoragePublicUrl;
+    }
 
-        records.push(newRecord);
-        res.send({ message: 'Insert Successful' });
-    },
-);
+    const newRecord = {
+        id: generateUniqueId(),
+        name,
+        amount,
+        date,
+        notes,
+        attachment: imageUrl,
+    };
+
+    records.push(newRecord);
+    res.send({ message: 'Insert Successful' });
+});
 
 router.put(
     '/editrecord/:id',
