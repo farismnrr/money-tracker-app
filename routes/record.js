@@ -90,33 +90,36 @@ router.post('/insertrecord', multer.single('attachment'), imgUpload.uploadToGcs,
     res.send({ message: 'Insert Successful' });
 });
 
-router.put(
-    '/editrecord/:id',
-    multer.single('attachment'),
-    imgUpload.uploadToGcs,
-    (req, res) => {
-        const id = req.params.id;
-        const { name, amount, date, notes } = req.body;
-        const imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
+router.put('/editrecord/:id', multer.single('attachment'), imgUpload.uploadToGcs, (req, res) => {
+    const id = req.params.id;
+    const name = req.body.name;
+    const amount = req.body.amount;
+    const date = req.body.date;
+    const notes = req.body.notes;
+    let imageUrl = '';
 
-        const index = records.findIndex((record) => record.id === id);
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        imageUrl = req.file.cloudStoragePublicUrl;
+    }
 
-        if (index !== -1) {
-            records[index] = {
-                id,
-                name,
-                amount,
-                date,
-                notes,
-                attachment: imageUrl,
-            };
+    const index = records.findIndex(record => record.id === id);
 
-            res.send({ message: 'Update Successful' });
-        } else {
-            res.status(404).send({ message: 'Record not found' });
-        }
-    },
-);
+    if (index !== -1) {
+        // Update the record in the in-memory storage (records array)
+        records[index] = {
+            id,
+            name,
+            amount,
+            date,
+            notes,
+            attachment: imageUrl,
+        };
+
+        res.send({ message: 'Update Successful' });
+    } else {
+        res.status(404).send({ message: 'Record not found' });
+    }
+});
 
 router.delete('/deleterecord/:id', (req, res) => {
     const id = req.params.id;
@@ -126,17 +129,16 @@ router.delete('/deleterecord/:id', (req, res) => {
     res.send({ message: 'Delete successful' });
 });
 
-router.post(
-    '/uploadImage',
-    multer.single('image'),
-    imgUpload.uploadToGcs,
-    (req, res, next) => {
-        const data = req.body;
-        data.imageUrl = req.file ? req.file.cloudStoragePublicUrl : '';
+router.post('/uploadImage', multer.single('image'), imgUpload.uploadToGcs, (req, res, next) => {
+    const data = req.body;
 
-        res.send(data);
-    },
-);
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        // Update the data object with the cloud storage URL if an image is provided
+        data.imageUrl = req.file.cloudStoragePublicUrl;
+    }
+
+    res.send(data);
+});
 
 // Function to generate a unique ID
 function generateUniqueId() {
